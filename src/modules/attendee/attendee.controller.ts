@@ -1,11 +1,34 @@
-import { Body, Controller, Delete, Param, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import AttendeeService from './attendee.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('attendee')
 @UseGuards(JwtAuthGuard)
 export default class AttendeeController {
-  constructor(private readonly attendeeService: AttendeeService) { }
+  constructor(private readonly attendeeService: AttendeeService) {}
+
+  @Post(':eventId/join')
+  public async joinEvent(
+    @Param('eventId') eventId: string,
+    @Body() body: { rsvpStatus?: string },
+    @Req() req: any,
+  ) {
+    const userId = req.user.sub ?? req.user.userId;
+    return await this.attendeeService.joinEvent(
+      userId,
+      eventId,
+      body.rsvpStatus ?? 'confirmed',
+    );
+  }
 
   @Put(':attendeeId/rsvp')
   public async updateRsvp(

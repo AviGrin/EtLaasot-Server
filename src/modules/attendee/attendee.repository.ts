@@ -14,6 +14,29 @@ export default class AttendeeRepository {
     return Attendee.create({ userId, eventId });
   }
 
+  public async createAndConfirm(
+    userId: string,
+    eventId: string,
+    rsvpStatus: string,
+  ) {
+    const existing = await Attendee.findOne({ where: { userId, eventId } });
+    if (existing) {
+      await existing.update({ rsvpStatus, rsvpDate: new Date() });
+      return existing.reload({
+        include: [{ model: User, attributes: ['id', 'name', 'email'] }],
+      });
+    }
+    const attendee = await Attendee.create({
+      userId,
+      eventId,
+      rsvpStatus,
+      rsvpDate: new Date(),
+    });
+    return attendee.reload({
+      include: [{ model: User, attributes: ['id', 'name', 'email'] }],
+    });
+  }
+
   public async getAttendeesByEvent(eventId: string) {
     return Attendee.findAll({
       where: { eventId },

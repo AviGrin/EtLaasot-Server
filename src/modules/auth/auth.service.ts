@@ -2,7 +2,7 @@ import { JwtService } from '@nestjs/jwt';
 import UserRoleService from '../user-role/user-role.service';
 import UserService from '../user/user.service';
 import BranchService from '../branch/branch.service';
-import { AUTH_ROLES, ROLE_ID_TO_NAME } from 'src/constants/auth.constants';
+import { ROLE_ID_TO_NAME } from 'src/constants/auth.constants';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 @Injectable()

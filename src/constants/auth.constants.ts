@@ -40,7 +40,7 @@ export const EVENT_TYPES = {
 };
 
 export const ROLE_ID_TO_NAME: Record<number, string> = Object.fromEntries(
-  Object.values(AUTH_ROLES).map((r) => [r.id, r.name]),
+  Object.entries(AUTH_ROLES).map(([key, r]) => [r.id, key]),
 );
 
 // Keep backward compatibility

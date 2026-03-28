@@ -3,7 +3,7 @@ import AttendeeRepository from './attendee.repository';
 
 @Injectable()
 export default class AttendeeService {
-  constructor(private readonly attendeeRepository: AttendeeRepository) { }
+  constructor(private readonly attendeeRepository: AttendeeRepository) {}
 
   public async addAttendee(userId: string, eventId: string) {
     try {
@@ -14,6 +14,18 @@ export default class AttendeeService {
       return attendee;
     } catch (error) {
       throw new InternalServerErrorException('Failed to create attendee');
+    }
+  }
+
+  public async joinEvent(userId: string, eventId: string, rsvpStatus: string) {
+    try {
+      return await this.attendeeRepository.createAndConfirm(
+        userId,
+        eventId,
+        rsvpStatus,
+      );
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to join event');
     }
   }
 
