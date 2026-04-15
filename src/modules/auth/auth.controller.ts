@@ -7,9 +7,12 @@ export default class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  login(@Body('userId') userId: string) {
-    return this.authService.login(userId);
-  }
+login(
+  @Body('userId') userId: string,
+  @Body('captchaToken') captchaToken: string,
+) {
+  return this.authService.login(userId, captchaToken);
+}
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
