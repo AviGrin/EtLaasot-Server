@@ -31,6 +31,7 @@ import {
 type AuthRole = {
   roleId: number;
   branchId?: string;
+  resourceId?: string;
 };
 
 type AuthUser = {
@@ -52,6 +53,8 @@ export default class ActivityService {
     dto: StartVolunteerActivityDto,
   ) {
     this.ensureVolunteerAccess(authUser);
+    const eventId = dto.eventId.trim();
+    const traineeId = dto.traineeId.trim();
 
     const existingActivity = await this.activityRepository.findActiveByVolunteer(
       authUser.userId,
@@ -63,8 +66,8 @@ export default class ActivityService {
 
     const [volunteer, trainee, event] = await Promise.all([
       this.userService.findById(authUser.userId),
-      this.userService.findById(dto.traineeId),
-      this.eventService.findById(dto.eventId),
+      this.userService.findById(traineeId),
+      this.eventService.findById(eventId),
     ]);
 
     if (!volunteer) {
@@ -103,8 +106,8 @@ export default class ActivityService {
 
     const activity = await this.activityRepository.create({
       volunteerId: authUser.userId,
-      traineeId: dto.traineeId,
-      eventId: dto.eventId,
+      traineeId,
+      eventId,
       branchId: eventBranchId ?? traineeBranchId ?? volunteerBranchId ?? null,
       startTime: new Date(),
       status: VolunteerActivityStatus.ACTIVE,
@@ -260,6 +263,45 @@ export default class ActivityService {
     return this.toActivityResponse(activity);
   }
 
+  public async getEventAttendance(authUser: AuthUser, eventId: string) {
+    const normalizedEventId = eventId.trim();
+    await this.ensureAdminAccessToEvent(authUser, normalizedEventId);
+    const activities = await this.activityRepository.findAttendanceByEvent(
+      normalizedEventId,
+    );
+    const volunteerMap = new Map<string, { volunteerId: string; name: string }>();
+
+    for (const activity of activities) {
+      if (!activity.volunteerId || volunteerMap.has(activity.volunteerId)) {
+        continue;
+      }
+
+      volunteerMap.set(activity.volunteerId, {
+        volunteerId: activity.volunteerId,
+        name: activity.volunteer?.name ?? activity.volunteerId,
+      });
+    }
+
+    return Array.from(volunteerMap.values()).sort((first, second) =>
+      first.name.localeCompare(second.name, 'he'),
+    );
+  }
+
+  public async removeEventAttendance(
+    authUser: AuthUser,
+    eventId: string,
+    volunteerId: string,
+  ) {
+    const normalizedEventId = eventId.trim();
+    const normalizedVolunteerId = volunteerId.trim();
+    await this.ensureAdminAccessToEvent(authUser, normalizedEventId);
+    await this.activityRepository.removeVolunteerAttendanceForEvent(
+      normalizedEventId,
+      normalizedVolunteerId,
+    );
+    return this.getEventAttendance(authUser, normalizedEventId);
+  }
+
   private toActivityResponse(activity: VolunteerActivity) {
     const branch = applyBranchDisplay(activity.branch);
     const durationMinutes = calculateDurationMinutes(
@@ -306,7 +348,7 @@ export default class ActivityService {
     );
     const branchIds = roles
       .filter((role) => role.roleId === AUTH_ROLES.BRANCH_ADMIN.id)
-      .map((role) => role.branchId)
+      .map((role) => this.getRoleBranchId(role))
       .filter((branchId): branchId is string => !!branchId);
 
     if (!isSuperAdmin && branchIds.length === 0) {
@@ -316,10 +358,26 @@ export default class ActivityService {
     return { isSuperAdmin, branchIds };
   }
 
+  private async ensureAdminAccessToEvent(authUser: AuthUser, eventId: string) {
+    const { isSuperAdmin, branchIds } = this.getAdminScope(authUser);
+    const event = await this.eventService.findById(eventId);
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    if (!isSuperAdmin && event.branchId && !branchIds.includes(event.branchId)) {
+      throw new ForbiddenException('You do not have access to this event');
+    }
+
+    return event;
+  }
+
   private ensureBranchPermission(authUser: AuthUser, branchId: string) {
     const hasBranchAccess = authUser.roles?.some(
       (role) =>
-        role.roleId === AUTH_ROLES.SUPER_ADMIN.id || role.branchId === branchId,
+        role.roleId === AUTH_ROLES.SUPER_ADMIN.id ||
+        this.getRoleBranchId(role) === branchId,
     );
 
     if (!hasBranchAccess) {
@@ -354,6 +412,13 @@ export default class ActivityService {
   }
 
   private getFirstBranchId(authUser: AuthUser) {
-    return authUser.roles?.find((role) => role.branchId)?.branchId;
+    const role = authUser.roles?.find((currentRole) =>
+      this.getRoleBranchId(currentRole),
+    );
+    return role ? this.getRoleBranchId(role) : undefined;
+  }
+
+  private getRoleBranchId(role: AuthRole) {
+    return role.branchId ?? role.resourceId;
   }
 }

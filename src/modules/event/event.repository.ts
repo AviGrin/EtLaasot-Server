@@ -47,6 +47,7 @@ export default class EventRepository {
         },
       ],
       order: [['start_date', 'DESC']],
+      limit: 500,
     });
   }
 
@@ -89,6 +90,7 @@ export default class EventRepository {
       },
       include: [{ model: Attendee, include: [{ model: User }] }],
       order: [['start_date', 'ASC']],
+      limit: 1000,
     });
   }
 }

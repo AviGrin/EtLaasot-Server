@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import EventRepository from './event.repository';
 import { IEvent } from './interfaces/event.interface';
 import AttendeeService from '../attendee/attendee.service';
@@ -25,18 +30,27 @@ export default class EventService {
   }
 
   public async updateEvent(id: string, eventData: IEvent) {
-  try {
-    const payload = {
-      ...eventData,
-      startDate: new Date(eventData.startDate),
-      endDate: new Date(eventData.endDate),
-    };
+    try {
+      const payload = {
+        ...eventData,
+        startDate: new Date(eventData.startDate),
+        endDate: new Date(eventData.endDate),
+      };
 
-    return await this.eventRepository.updateEvent(id, payload);
-  } catch (error) {
-    throw new InternalServerErrorException('Failed to update event');
+      const event = await this.eventRepository.updateEvent(id, payload);
+
+      if (!event) {
+        throw new NotFoundException('Event not found');
+      }
+
+      return event;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update event');
+    }
   }
-}
 
   public async findAllEvents(branchId?: string) {
     try {
@@ -98,5 +112,35 @@ export default class EventService {
     } catch (error) {
       throw new InternalServerErrorException('Failed to fetch event');
     }
+  }
+
+  public async getParticipantsByEvent(eventId: string, actor: any) {
+    return await this.attendeeService.getParticipantsByEvent(eventId, actor);
+  }
+
+  public async createManualPairing(
+    eventId: string,
+    mentorId: string,
+    traineeId: string,
+    actor: any,
+  ) {
+    return await this.attendeeService.createManualPairing(
+      eventId,
+      mentorId,
+      traineeId,
+      actor,
+    );
+  }
+
+  public async deletePairingWithAttendees(
+    eventId: string,
+    pairingId: string,
+    actor: any,
+  ) {
+    return await this.attendeeService.deletePairingWithAttendees(
+      eventId,
+      pairingId,
+      actor,
+    );
   }
 }
