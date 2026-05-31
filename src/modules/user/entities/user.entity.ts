@@ -8,9 +8,11 @@ import {
   PrimaryKey,
   ForeignKey,
   BelongsTo,
+  BelongsToMany,
 } from 'sequelize-typescript';
 import { IUser } from '../interfaces/user.interface';
 import Attendee from 'src/modules/attendee/entities/attendee.entity';
+import Event from 'src/modules/event/entities/event.entity';
 import EventPairing from 'src/modules/attendee/entities/event-pairing.entity';
 import UserRole from 'src/modules/user-role/enitites/user-role.entity';
 import Branch from 'src/modules/branch/entities/branch.entity';
@@ -57,6 +59,9 @@ export default class User extends Model<IUser> {
 
   @HasMany(() => Attendee)
   declare attendees: Attendee[];
+
+  @BelongsToMany(() => Event, () => Attendee)
+  declare events: Event[];
 
   @HasMany(() => EventPairing, 'mentorId')
   declare eventMentorPairings: EventPairing[];

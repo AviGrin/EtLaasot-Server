@@ -17,10 +17,10 @@ export class CreateEventDto {
   description: string;
 
   @IsDateString()
-  startDate: Date;
+  startDate: string;
 
   @IsDateString()
-  endDate: Date;
+  endDate: string;
 
   @IsString()
   address: string;

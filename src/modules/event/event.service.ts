@@ -8,6 +8,11 @@ import EventRepository from './event.repository';
 import { IEvent } from './interfaces/event.interface';
 import AttendeeService from '../attendee/attendee.service';
 
+type EventInput = Omit<IEvent, 'startDate' | 'endDate'> & {
+  startDate: string | Date;
+  endDate: string | Date;
+};
+
 @Injectable()
 export default class EventService {
   constructor(
@@ -15,7 +20,7 @@ export default class EventService {
     private readonly attendeeService: AttendeeService,
   ) { }
 
-  public async createEvent(eventData: IEvent) {
+  public async createEvent(eventData: EventInput) {
     try {
       const payload = {
         ...eventData,
@@ -29,7 +34,7 @@ export default class EventService {
     }
   }
 
-  public async updateEvent(id: string, eventData: IEvent) {
+  public async updateEvent(id: string, eventData: EventInput) {
     try {
       const payload = {
         ...eventData,
