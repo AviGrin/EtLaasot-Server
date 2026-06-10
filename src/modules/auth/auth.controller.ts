@@ -47,7 +47,10 @@ export default class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() body: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const userId = body.userId ?? body.identifyId;
 
     if (!userId) {
@@ -62,7 +65,7 @@ export default class AuthController {
 
     res.cookie('access_token', result.token, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: isProduction() ? 'none' : 'lax',
       secure: isProduction(),
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
@@ -78,7 +81,7 @@ export default class AuthController {
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token', {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: isProduction() ? 'none' : 'lax',
       secure: isProduction(),
       path: '/',
     });
