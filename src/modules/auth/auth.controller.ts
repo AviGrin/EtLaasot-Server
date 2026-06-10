@@ -18,7 +18,7 @@ import {
 } from 'class-validator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import type { Response } from 'express';
-import { isProduction } from 'src/config/env.util';
+import { useSecureCookies } from 'src/config/env.util';
 
 class LoginDto {
   @IsOptional()
@@ -63,10 +63,12 @@ export default class AuthController {
       body.recaptchaToken,
     );
 
+    const crossSite = useSecureCookies();
+
     res.cookie('access_token', result.token, {
       httpOnly: true,
-      sameSite: isProduction() ? 'none' : 'lax',
-      secure: isProduction(),
+      sameSite: crossSite ? 'none' : 'lax',
+      secure: crossSite,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
@@ -79,10 +81,12 @@ export default class AuthController {
 
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
+    const crossSite = useSecureCookies();
+
     res.clearCookie('access_token', {
       httpOnly: true,
-      sameSite: isProduction() ? 'none' : 'lax',
-      secure: isProduction(),
+      sameSite: crossSite ? 'none' : 'lax',
+      secure: crossSite,
       path: '/',
     });
 
