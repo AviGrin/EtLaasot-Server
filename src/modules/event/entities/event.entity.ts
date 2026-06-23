@@ -45,6 +45,10 @@ export default class Event extends Model<IEvent> {
   @Column({ type: DataType.STRING(30), defaultValue: 'general' })
   declare eventType: string;
 
+  @AllowNull
+  @Column(DataType.TEXT)
+  declare aiSummary: string | null;
+
   @ForeignKey(() => Branch)
   @AllowNull
   @Column(DataType.STRING(50))

@@ -16,6 +16,8 @@ import {
   getPortEnv,
   getRequiredEnv,
 } from './config/env.util';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AiModule } from './modules/ai/ai.module';
 
 const getDbDialectOptions = () => {
   if (!getBooleanEnv('DB_SSL', true)) {
@@ -33,6 +35,12 @@ const getDbDialectOptions = () => {
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+
+    // הגדרת הגבלת הקצב (Rate Limiter) כפי שביקשת לאבטחה
+    ThrottlerModule.forRoot([{
+      ttl: 15 * 60000, // 15 דקות
+      limit: 20,       // מקסימום 20 בקשות
+    }]),
 
     SequelizeModule.forRoot({
       dialect: 'postgres',
@@ -60,6 +68,7 @@ const getDbDialectOptions = () => {
     BranchModule,
     MentorAssignmentModule,
     ActivityModule,
+    AiModule, // <--- הוספנו לכאן את מודול ה-AI
   ],
 })
 export class AppModule {}

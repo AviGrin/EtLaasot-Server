@@ -23,7 +23,10 @@ export const getOptionalEnv = (
   const value = process.env[key]?.trim();
   return value || fallback;
 };
-
+// הוסף לקובץ env.util.ts
+export const getGeminiApiKey = (): string => {
+  return getRequiredEnv('GEMINI_API_KEY');
+};
 export const getPortEnv = (key: string, fallback: number): number => {
   return getIntegerEnv(key, fallback, 'port');
 };

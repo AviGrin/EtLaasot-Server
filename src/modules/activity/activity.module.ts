@@ -11,10 +11,10 @@ import { EventModule } from '../event/event.module';
   imports: [
     SequelizeModule.forFeature([VolunteerActivity]),
     UserModule,
-    EventModule,
+    forwardRef(() => EventModule), // <-- שינוי קטן כאן למניעת מעגל
   ],
   controllers: [ActivityController],
   providers: [ActivityService, ActivityRepository],
-  exports: [ActivityService],
+  exports: [ActivityService,ActivityRepository],
 })
 export class ActivityModule {}

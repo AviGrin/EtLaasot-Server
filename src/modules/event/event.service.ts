@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -7,6 +8,8 @@ import {
 import EventRepository from './event.repository';
 import { IEvent } from './interfaces/event.interface';
 import AttendeeService from '../attendee/attendee.service';
+import AiService from '../ai/ai.service';
+import ActivityRepository from '../activity/activity.repository'; // הוסף ל-constructor
 
 type EventInput = Omit<IEvent, 'startDate' | 'endDate'> & {
   startDate: string | Date;
@@ -18,8 +21,27 @@ export default class EventService {
   constructor(
     private readonly eventRepository: EventRepository,
     private readonly attendeeService: AttendeeService,
+    @Inject(forwardRef(() => ActivityRepository)) // <-- הוספת ההזרקה המעגלית
+    private readonly aiService: AiService
   ) { }
+  public async generateAndSaveSummary(eventId: string) {
+    const event = await this.findById(eventId);
+    if (!event) throw new NotFoundException('Event not found');
 
+    // שליפת הפעילויות מהשטח (כדי לקבל את הערות החונכים)
+    const activities = await this.activityRepository.findAdminActivities({ eventId });
+
+    if (activities.length === 0) {
+      throw new BadRequestException('Cannot generate summary: No activities recorded for this event');
+    }
+
+    // הפעלת שירות ה-AI
+    const aiSummary = await this.aiService.generateEventSummary(event.name, event.startDate, activities);
+
+    // שמירה ל-DB
+    await event.update({ aiSummary });
+    return { success: true, summary: aiSummary };
+  }
   public async createEvent(eventData: EventInput) {
     try {
       const payload = {

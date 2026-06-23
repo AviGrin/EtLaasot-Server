@@ -15,6 +15,7 @@ import { CreateEventDto } from './dtos/event.dto';
 import { IEvent } from './interfaces/event.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthorizationService } from '../auth/authorization.service';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('event')
 @UseGuards(JwtAuthGuard)
@@ -31,6 +32,17 @@ export default class EventController {
       eventData.branchId ?? '',
     );
     return await this.eventService.createEvent(eventData);
+  }
+
+  @Post(':eventId/generate-summary')
+  @UseGuards(JwtAuthGuard, ThrottlerGuard) // הגנת אימות + הגנת קצב בקשות
+  public async generateEventSummary(
+    @Param('eventId') eventId: string,
+    @Req() req: any,
+  ) {
+    // רק מנהלים מורשים ליצור סיכום חכם
+    await this.authorizationService.assertAdminForEvent(req.user, eventId);
+    return await this.eventService.generateAndSaveSummary(eventId);
   }
 
   @Put('update-event/:id')

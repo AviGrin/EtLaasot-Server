@@ -7,6 +7,7 @@ export interface IEvent {
   description: string;
   eventType?: string;
   branchId?: string;
+  aiSummary?: string | null;
 
   // Timestamps
   createdAt?: Date;

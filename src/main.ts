@@ -2,6 +2,7 @@ import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { getOptionalEnv, isProduction } from './config/env.util';
+import helmet from 'helmet';
 
 const parseCorsOrigins = () => {
   const configuredOrigins = getOptionalEnv('CORS_ORIGINS');
@@ -24,7 +25,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
-
+  app.use(helmet());
   app.enableCors({
     origin: parseCorsOrigins(),
     credentials: true,
