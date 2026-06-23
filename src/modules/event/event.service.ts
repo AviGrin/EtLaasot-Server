@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  forwardRef,
   HttpException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -20,8 +22,13 @@ type EventInput = Omit<IEvent, 'startDate' | 'endDate'> & {
 export default class EventService {
   constructor(
     private readonly eventRepository: EventRepository,
+
+    @Inject(forwardRef(() => AttendeeService))
     private readonly attendeeService: AttendeeService,
-    @Inject(forwardRef(() => ActivityRepository)) // <-- הוספת ההזרקה המעגלית
+
+    @Inject(forwardRef(() => ActivityRepository))
+    private readonly activityRepository: ActivityRepository,
+
     private readonly aiService: AiService
   ) { }
   public async generateAndSaveSummary(eventId: string) {

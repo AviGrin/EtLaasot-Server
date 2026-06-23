@@ -1,10 +1,10 @@
-import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import VolunteerActivity from './entities/activity.entity';
 import ActivityController from './activity.controller';
 import ActivityService from './activity.service';
 import ActivityRepository from './activity.repository';
 import { UserModule } from '../user/user.module';
+import { Module, forwardRef } from '@nestjs/common'; // <-- הוספנו את forwardRef לכאן
 import { EventModule } from '../event/event.module';
 
 @Module({
